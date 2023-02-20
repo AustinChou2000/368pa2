@@ -119,3 +119,78 @@ Node* split_node_on_dimension(Node* node, int split_dimension, double split_valu
     children[1] = new_node2;
     return create_node(children, 2);
 }
+
+void add_node_to_parent(Node* root, Node* node, Node* new_node) {
+    // Check if the root node is null, which means the tree is empty
+    if (root == NULL) {
+        root = new_node;
+        return;
+    }
+
+    // Find the parent node of the node
+    Node* parent = find_parent(root, node);
+
+    // If the parent is not full, insert the new node into it
+    if (parent->num_rects < MAX_RECTS) {
+        insert_node(parent, new_node->rects[0]);
+        insert_node(parent, new_node->rects[1]);
+        destroy_node(new_node);
+    } else {
+        // Otherwise, split the parent node
+        int split_dimension;
+        double split_value;
+        find_split_dimension(parent, &split_dimension);
+        find_median(parent, split_dimension, &split_value);
+        Node* new_parent = split_node_on_dimension(parent, split_dimension, split_value);
+
+        // Add the two new nodes to the new parent
+        add_node_to_parent(root, parent, new_node);
+        add_node_to_parent(root, new_parent, new_node);
+    }
+}
+
+Node* find_parent(Node* root, Node* node) {
+    // If the root is null or has no children, return null
+    if (root == NULL || root->children == NULL) {
+        return NULL;
+    }
+
+    // Check if the node is a child of the root
+    for (int i = 0; i < root->num_children; i++) {
+        if (root->children[i] == node) {
+            return root;
+        }
+    }
+
+    // Recursively search for the node's parent
+    for (int i = 0; i < root->num_children; i++) {
+        Node* parent = find_parent(root->children[i], node);
+        if (parent != NULL) {
+            return parent;
+        }
+    }
+
+    return NULL;
+}
+
+void search_tree(Node* node, Rect* rect, int* count, Rect** results, int max_results) {
+    if (node->leaf) {
+        for (int i = 0; i < node->num_rects; i++) {
+            if (intersects(node->rects[i], rect)) {
+                if (*count == max_results) {
+                    // results array is full, cannot add more
+                    return;
+                }
+                results[*count] = node->rects[i];
+                (*count)++;
+            }
+        }
+    } else {
+        for (int i = 0; i < node->num_children; i++) {
+            if (intersects(node->children[i]->boundary, rect)) {
+                search_tree(node->children[i], rect, count, results, max_results);
+            }
+        }
+    }
+}
+
