@@ -8,6 +8,8 @@
 
 
 Node* choose_subtree(Node* root, Rect* rect);
+double area(Rect* rect);
+
 
 Node* create_node(Rect* rect) {
     Node* new_node = (Node*)malloc(sizeof(Node));
@@ -96,3 +98,8 @@ Node* choose_subtree(Node* root, Rect* rect) {
         }
     }
 }
+
+double area(Rect* rect) {
+    return rect->width * rect->height;
+}
+
